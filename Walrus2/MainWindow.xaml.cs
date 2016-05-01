@@ -47,9 +47,10 @@ namespace Walrus2
             Model3DGroup model3DGroup = new Model3DGroup();
 
             model3DGroup.Children.Clear();
+            double cubeSize = Math.Sqrt(graph.Size);
             for (int i = 0; i < graph.Size; i++)
             {
-                model3DGroup.Children.Add(Graphics3D.GetCube(graph.Positions[i], new Point3D(10, 10, 10), Brushes.LimeGreen));
+                model3DGroup.Children.Add(Graphics3D.GetCube(graph.Positions[i], new Point3D(cubeSize, cubeSize, cubeSize), Brushes.LimeGreen));
             }
 
             for (int y = 0; y < graph.Size; y++)
@@ -58,13 +59,10 @@ namespace Walrus2
                 {
                     if (graph.NeighbourMatrix[y,x] == true)
                     {
-                        model3DGroup.Children.Add(Graphics3D.GetLine(graph.Positions[y], graph.Positions[x], Brushes.Yellow, 0.2));
+                        model3DGroup.Children.Add(Graphics3D.GetLine(graph.Positions[y], graph.Positions[x], Brushes.Yellow, cubeSize/50));
                     }
                 }
             }
-            model3DGroup.Children.Add(Graphics3D.GetLine(new Point3D(-1000000, 0, 0), new Point3D(1000000, 0, 0), Brushes.White, 0.05));
-            model3DGroup.Children.Add(Graphics3D.GetLine(new Point3D(0, -1000000, 0), new Point3D(0, 1000000, 0), Brushes.White, 0.05));
-            model3DGroup.Children.Add(Graphics3D.GetLine(new Point3D(0, 0, -1000000), new Point3D(0, 0, 1000000), Brushes.White, 0.05));
 
             ModelVisual3D modelVisual = new ModelVisual3D();
             modelVisual.Content = model3DGroup;
@@ -97,12 +95,12 @@ namespace Walrus2
         public void LoadGraph()
         {
             int n = Convert.ToInt32(textBox1.Text);
-            Graph graph = new Graph(n, n, 1.0 / n);
+            Graph graph = new Graph(n, n * 2, 1.0 / n);
 
             Viewport3D viewport3D = new Viewport3D();
             viewport3D.Children.Add(GetDrawedGraph(graph));
             viewport3D.Children.Add(GetLight());
-            viewport3D.Camera = GetCamera(n*4);
+            viewport3D.Camera = GetCamera(n*8);
 
             TabItem newTab = new TabItem();
             newTab.Header = "Graph " + Convert.ToString(tabControl.Items.Count);

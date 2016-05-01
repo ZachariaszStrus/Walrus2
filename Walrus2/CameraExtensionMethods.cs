@@ -21,8 +21,8 @@ namespace Walrus2
             double radius = camera.GetRadius();
             double xyRadius = Math.Sqrt(Math.Pow(camera.Position.X - center.X, 2) +
                                  Math.Pow(camera.Position.Y - center.Y, 2));
-            var theta = -delta.X / 400;
-            var phi = delta.Y / 200;
+            var theta = -delta.X / 300;
+            var phi = delta.Y / 300;
 
             //up-down
             
@@ -52,27 +52,27 @@ namespace Walrus2
             camera.UpDirection = new Vector3D(0, 0, 1);
         }
 
-        public static void MoveWithMouseWheel(this PerspectiveCamera camera, int delta, Point3D center)
+        public static void MoveWithMouseWheel(this PerspectiveCamera camera, double delta, Point3D center)
         {
-            delta /= 10;
-            double k = Math.Max(Math.Abs(camera.Position.X), 
+            delta = camera.GetRadius() / 10 * (delta > 0 ? 1 : -1);
+            double k = Math.Max(Math.Abs(camera.Position.X),
                 Math.Max(Math.Abs(camera.Position.Y), Math.Abs(camera.Position.Z)));
 
             Point3D newPosition = new Point3D(camera.LookDirection.X * delta / k + camera.Position.X,
-                                              camera.LookDirection.Y * delta / k + camera.Position.Y,
-                                              camera.LookDirection.Z * delta / k + camera.Position.Z);
+                                                camera.LookDirection.Y * delta / k + camera.Position.Y,
+                                                camera.LookDirection.Z * delta / k + camera.Position.Z);
 
             double r = Math.Sqrt(Math.Pow(newPosition.X - center.X, 2) +
-                                 Math.Pow(newPosition.Y - center.Y, 2) +
-                                 Math.Pow(newPosition.Z - center.Z, 2));
+                                    Math.Pow(newPosition.Y - center.Y, 2) +
+                                    Math.Pow(newPosition.Z - center.Z, 2));
 
-
-            if (Math.Abs(r) >= 20)
+            if (r > 1)
             {
                 camera.LookDirection = new Vector3D(-newPosition.X, -newPosition.Y, -newPosition.Z);
                 camera.Position = newPosition;
                 camera.UpDirection = new Vector3D(0, 0, 1);
             }
+            
         }
 
         public static void SetPosition(this PerspectiveCamera camera, Point3D position)
