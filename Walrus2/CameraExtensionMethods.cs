@@ -34,7 +34,7 @@ namespace Walrus2
                             (camera.Position.X < 0 ? -1 : 1);
             newPosition.Y = camera.Position.Y / camera.Position.X * newPosition.X;
 
-            if(xyRadius < 1)
+            if(xyRadius < 0.01)
             {
                 newPosition = new Point3D(camera.Position.X, camera.Position.Y, camera.Position.Z);
             }

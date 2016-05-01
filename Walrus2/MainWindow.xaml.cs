@@ -1,19 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Walrus2
 {
@@ -22,20 +12,7 @@ namespace Walrus2
     /// </summary>
     public partial class MainWindow : Window
     {
-        Point mouseInitialPosition;
-        
-        public Point MouseInitialPosition
-        {
-            get
-            {
-                return mouseInitialPosition;
-            }
-
-            set
-            {
-                mouseInitialPosition = value;
-            }
-        }
+        public Point MouseInitialPosition { get; set; }
 
         public MainWindow()
         {
@@ -50,7 +27,9 @@ namespace Walrus2
             double cubeSize = Math.Sqrt(graph.Size);
             for (int i = 0; i < graph.Size; i++)
             {
-                model3DGroup.Children.Add(Graphics3D.GetCube(graph.Positions[i], new Point3D(cubeSize, cubeSize, cubeSize), Brushes.LimeGreen));
+                model3DGroup.Children.Add(Graphics3D.GetCube(graph.Positions[i], 
+                                                             new Point3D(cubeSize, cubeSize, cubeSize), 
+                                                             Brushes.LimeGreen));
             }
 
             for (int y = 0; y < graph.Size; y++)
@@ -59,7 +38,10 @@ namespace Walrus2
                 {
                     if (graph.NeighbourMatrix[y,x] == true)
                     {
-                        model3DGroup.Children.Add(Graphics3D.GetLine(graph.Positions[y], graph.Positions[x], Brushes.Yellow, cubeSize/50));
+                        model3DGroup.Children.Add(Graphics3D.GetLine(graph.Positions[y], 
+                                                                     graph.Positions[x], 
+                                                                     Brushes.White, 
+                                                                     cubeSize/50));
                     }
                 }
             }

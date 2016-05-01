@@ -1,56 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media.Media3D;
 
 namespace Walrus2
 {
     public class Graph
     {
-        bool[,] neighbourMatrix;
-        Point3D[] positions;
-        int size;
+        public bool[,] NeighbourMatrix { get; set; }
 
-        public bool[,] NeighbourMatrix
-        {
-            get
-            {
-                return neighbourMatrix;
-            }
+        public Point3D[] Positions { get; set; }
 
-            set
-            {
-                neighbourMatrix = value;
-            }
-        }
-
-        public Point3D[] Positions
-        {
-            get
-            {
-                return positions;
-            }
-
-            set
-            {
-                positions = value;
-            }
-        }
-
-        public int Size
-        {
-            get
-            {
-                return size;
-            }
-
-            set
-            {
-                size = value;
-            }
-        }
+        public int Size { get; set; }
 
         public Graph(int n, int r, double p)
         {
