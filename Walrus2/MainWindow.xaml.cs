@@ -100,18 +100,24 @@ namespace Walrus2
 
         private void Window_MouseMove(object sender, MouseEventArgs e)
         {
-            TabItem selectedTab = tabControl.SelectedItem as TabItem;
-            var viewport3D = selectedTab.Content as Viewport3D;
-            if (e.LeftButton == MouseButtonState.Pressed && viewport3D != null)
+            if (tabControl.SelectedItem != null)
             {
-                Point relativePoint = viewport3D.TransformToAncestor(this).Transform(new Point(0, 0));
-                Point currentMousePosition = e.GetPosition(sender as IInputElement);
-                if (currentMousePosition.X > relativePoint.X && currentMousePosition.Y > relativePoint.Y)
+                TabItem selectedTab = tabControl.SelectedItem as TabItem;
+                var viewport3D = selectedTab.Content as Viewport3D;
+                if (e.LeftButton == MouseButtonState.Pressed && viewport3D != null)
                 {
-                    PerspectiveCamera camera = viewport3D.Camera as PerspectiveCamera;
-                    camera.RotateWithMouse(MouseInitialPosition, currentMousePosition, new Point3D(0, 0, 0));
-                    MouseInitialPosition = e.GetPosition(sender as IInputElement);
-                    textBox.Text = MouseInitialPosition.ToString();
+                    if (viewport3D.IsDescendantOf(this))
+                    {
+                        Point relativePoint = viewport3D.TransformToAncestor(this).Transform(new Point(0, 0));
+                        Point currentMousePosition = e.GetPosition(sender as IInputElement);
+                        if (currentMousePosition.X > relativePoint.X && currentMousePosition.Y > relativePoint.Y)
+                        {
+                            PerspectiveCamera camera = viewport3D.Camera as PerspectiveCamera;
+                            camera.RotateWithMouse(MouseInitialPosition, currentMousePosition, new Point3D(0, 0, 0));
+                            MouseInitialPosition = e.GetPosition(sender as IInputElement);
+                            textBox.Text = MouseInitialPosition.ToString();
+                        }
+                    }
                 }
             }
         }
@@ -126,5 +132,14 @@ namespace Walrus2
             LoadGraph();
         }
 
+        private void CloseTab_Clicked(object sender, RoutedEventArgs e)
+        {
+            TabItem selectedTab = tabControl.SelectedItem as TabItem;
+            if(selectedTab  != null)
+            {
+                tabControl.Items.Remove(selectedTab);
+            }
+        }
+        
     }
 }
