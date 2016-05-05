@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -24,27 +25,24 @@ namespace Walrus2
             Model3DGroup model3DGroup = new Model3DGroup();
 
             model3DGroup.Children.Clear();
-            double cubeSize = Math.Sqrt(graph.Size);
-            for (int i = 0; i < graph.Size; i++)
+            double cubeSize = 10;
+            foreach (var node in graph.Nodes)
             {
-                model3DGroup.Children.Add(Graphics3D.GetCube(graph.Positions[i], 
-                                                             new Point3D(cubeSize, cubeSize, cubeSize), 
-                                                             Brushes.LimeGreen));
+                GeometryModel3D cube = Graphics3D.GetCube(node.Value.Position,
+                                                                new Point3D(cubeSize, cubeSize, cubeSize),
+                                                                Brushes.LimeGreen);
+                model3DGroup.Children.Add(cube);
             }
 
-            for (int y = 0; y < graph.Size; y++)
+            foreach (var edge in graph.Edges)
             {
-                for (int x = y + 1; x < graph.Size; x++)
-                {
-                    if (graph.NeighbourMatrix[y,x] == true)
-                    {
-                        model3DGroup.Children.Add(Graphics3D.GetLine(graph.Positions[y], 
-                                                                     graph.Positions[x], 
-                                                                     Brushes.White, 
-                                                                     cubeSize/50));
-                    }
-                }
+                model3DGroup.Children.Add(Graphics3D.GetLine(edge.StartNode.Position, edge.EndNode.Position, 
+                                                             Brushes.White, cubeSize / 50));
             }
+
+            model3DGroup.Children.Add(Graphics3D.GetCube(new Point3D(0, 0, 0),
+                                                                new Point3D(cubeSize, cubeSize, cubeSize),
+                                                                Brushes.Red));
 
             ModelVisual3D modelVisual = new ModelVisual3D();
             modelVisual.Content = model3DGroup;
@@ -74,15 +72,12 @@ namespace Walrus2
             return camera;
         }
 
-        public void LoadGraph()
+        public void DrawGraph(Graph graph)
         {
-            int n = Convert.ToInt32(textBox1.Text);
-            Graph graph = new Graph(n, n * 2, 1.0 / n);
-
             Viewport3D viewport3D = new Viewport3D();
             viewport3D.Children.Add(GetDrawedGraph(graph));
             viewport3D.Children.Add(GetLight());
-            viewport3D.Camera = GetCamera(n*8);
+            viewport3D.Camera = GetCamera(graph.Nodes.Count*8);
 
             TabItem newTab = new TabItem();
             newTab.Header = "Graph " + Convert.ToString(tabControl.Items.Count);
@@ -121,6 +116,7 @@ namespace Walrus2
                 }
             }
         }
+
         private void Window_Wheel(object sender, MouseWheelEventArgs e)
         {
             PerspectiveCamera camera = (tabControl.SelectedContent as Viewport3D).Camera as PerspectiveCamera;
@@ -129,7 +125,8 @@ namespace Walrus2
 
         private void button_Click(object sender, RoutedEventArgs e)
         {
-            LoadGraph();
+            int n = Convert.ToInt32(textBox1.Text);
+            DrawGraph(new Graph(n, 1.0 / n));
         }
 
         private void CloseTab_Clicked(object sender, RoutedEventArgs e)
@@ -140,6 +137,23 @@ namespace Walrus2
                 tabControl.Items.Remove(selectedTab);
             }
         }
-        
+
+        private void CloseAllTabs_Clicked(object sender, RoutedEventArgs e)
+        {
+            tabControl.Items.Clear();
+        }
+
+        private void loadButton_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Forms.OpenFileDialog fileDialog =
+                new System.Windows.Forms.OpenFileDialog();
+            fileDialog.ShowDialog();
+
+            string selectedFile = fileDialog.FileName;
+            if (File.Exists(selectedFile))
+            {
+                DrawGraph(new Graph(selectedFile));
+            }
+        }
     }
 }

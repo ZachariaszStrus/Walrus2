@@ -97,6 +97,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="CameraExtensionMethods.cs" />
+    <Compile Include="Edge.cs" />
     <Compile Include="Graph.cs" />
     <Compile Include="Graphics3D.cs" />
     <Compile Include="MainWindow.xaml.cs">
@@ -105,6 +106,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Node.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
