@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -22,27 +23,28 @@ namespace Walrus2
 
         private ModelVisual3D GetDrawedGraph(Graph graph)
         {
+            double cubeSize = 10;
+            double lineGauge = 0.4;
+            SolidColorBrush lineColor = Brushes.White;
+
             Model3DGroup model3DGroup = new Model3DGroup();
 
-            model3DGroup.Children.Clear();
-            double cubeSize = 10;
             foreach (var node in graph.Nodes)
             {
-                GeometryModel3D cube = Graphics3D.GetCube(node.Value.Position,
-                                                                new Point3D(cubeSize, cubeSize, cubeSize),
-                                                                Brushes.LimeGreen);
-                model3DGroup.Children.Add(cube);
+                //int g = (int)((double)node.Value.TotalChildren() / graph.Root.TotalChildren() * 255);
+                byte g = 255;
+                SolidColorBrush cubeColor = new SolidColorBrush(Color.FromRgb(0,  Convert.ToByte(g), 0));
+                model3DGroup.Children.Add(Graphics3D.GetCube(node.Value.Position, new Point3D(cubeSize, cubeSize, cubeSize), cubeColor));
             }
 
             foreach (var edge in graph.Edges)
             {
-                model3DGroup.Children.Add(Graphics3D.GetLine(edge.StartNode.Position, edge.EndNode.Position, 
-                                                             Brushes.White, cubeSize / 50));
+                model3DGroup.Children.Add(Graphics3D.GetLine(edge.StartNode.Position, edge.EndNode.Position, lineColor, lineGauge));
             }
 
             model3DGroup.Children.Add(Graphics3D.GetCube(new Point3D(0, 0, 0),
-                                                                new Point3D(cubeSize, cubeSize, cubeSize),
-                                                                Brushes.Red));
+                                                         new Point3D(cubeSize, cubeSize, cubeSize),
+                                                         Brushes.Red));
 
             ModelVisual3D modelVisual = new ModelVisual3D();
             modelVisual.Content = model3DGroup;
@@ -53,8 +55,10 @@ namespace Walrus2
         {
             ModelVisual3D lightModel = new ModelVisual3D();
             Model3DGroup group = new Model3DGroup();
-
+            
             group.Children.Add(new DirectionalLight(Colors.White, new Vector3D(-2, -2, -2)));
+            group.Children.Add(new DirectionalLight(Colors.White, new Vector3D(-2, -2, -2)));
+            group.Children.Add(new DirectionalLight(Colors.White, new Vector3D(2, 2, 2)));
             group.Children.Add(new DirectionalLight(Colors.White, new Vector3D(2, 2, 2)));
 
             lightModel.Content = group;
@@ -77,7 +81,7 @@ namespace Walrus2
             Viewport3D viewport3D = new Viewport3D();
             viewport3D.Children.Add(GetDrawedGraph(graph));
             viewport3D.Children.Add(GetLight());
-            viewport3D.Camera = GetCamera(graph.Nodes.Count*8);
+            viewport3D.Camera = GetCamera(graph.Root.TotalChildren()*8);
 
             TabItem newTab = new TabItem();
             newTab.Header = "Graph " + Convert.ToString(tabControl.Items.Count);
@@ -110,7 +114,6 @@ namespace Walrus2
                             PerspectiveCamera camera = viewport3D.Camera as PerspectiveCamera;
                             camera.RotateWithMouse(MouseInitialPosition, currentMousePosition, new Point3D(0, 0, 0));
                             MouseInitialPosition = e.GetPosition(sender as IInputElement);
-                            textBox.Text = MouseInitialPosition.ToString();
                         }
                     }
                 }
@@ -121,12 +124,6 @@ namespace Walrus2
         {
             PerspectiveCamera camera = (tabControl.SelectedContent as Viewport3D).Camera as PerspectiveCamera;
             camera.MoveWithMouseWheel(e.Delta, new Point3D(0, 0, 0));
-        }
-
-        private void button_Click(object sender, RoutedEventArgs e)
-        {
-            int n = Convert.ToInt32(textBox1.Text);
-            DrawGraph(new Graph(n, 1.0 / n));
         }
 
         private void CloseTab_Clicked(object sender, RoutedEventArgs e)
@@ -152,7 +149,18 @@ namespace Walrus2
             string selectedFile = fileDialog.FileName;
             if (File.Exists(selectedFile))
             {
-                DrawGraph(new Graph(selectedFile));
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                Graph graph = new Graph(selectedFile);
+
+                // graph algorithms
+                graph.SphereAlgorithm();
+
+                stopwatch.Stop();
+                double d = stopwatch.ElapsedMilliseconds;
+
+                textBox.Text += d + " ms \n";
+
+                DrawGraph(graph);
             }
         }
     }

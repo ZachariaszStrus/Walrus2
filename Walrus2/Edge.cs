@@ -9,7 +9,9 @@ namespace Walrus2
     public class Edge
     {
         public Node StartNode { get; set; }
+
         public Node EndNode { get; set; }
+
 
         public Edge(Node n1, Node n2)
         {

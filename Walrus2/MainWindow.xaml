@@ -18,13 +18,11 @@
     <Grid Background="Black" Margin="0,0,-6,-4" >
         <TextBox x:Name="textBox" 
 			HorizontalAlignment="Left" 
-			Height="200" 
-			Margin="10,350,0,0" 
+			Height="410" 
+			Margin="10,140,0,0" 
 			TextWrapping="Wrap" 
 			VerticalAlignment="Top" 
 			Width="211" Background="#FF131313" Foreground="White"/>
-        <Button x:Name="button" Content="New random graph" HorizontalAlignment="Left" Margin="10,35,0,0" VerticalAlignment="Top" Width="211" Height="50" Background="#FF131313" Foreground="White" Click="button_Click" />
-        <TextBox x:Name="textBox1" HorizontalAlignment="Left" Height="20" Margin="10,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="60" Text="100" MouseMove="Window_MouseMove" MouseDown="Window_MouseDown"/>
 
         <dragablz:TabablzControl x:Name="tabControl" 
                                  Background="#FF131313" 
@@ -40,7 +38,7 @@
                 <dragablz:InterTabController />
             </dragablz:TabablzControl.InterTabController>
         </dragablz:TabablzControl>
-        <Button x:Name="loadButton" Content="Load graph" HorizontalAlignment="Left" Margin="10,90,0,0" VerticalAlignment="Top" Width="211" Height="50" Background="#FF131313" Foreground="White" Click="loadButton_Click" />
+        <Button x:Name="loadButton" Content="Load graph" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="211" Height="50" Background="#FF131313" Foreground="White" Click="loadButton_Click" />
 
     </Grid>
 </Window>
