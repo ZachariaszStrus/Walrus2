@@ -23,18 +23,17 @@ namespace Walrus2
 
         private ModelVisual3D GetDrawedGraph(Graph graph)
         {
-            double cubeSize = 10;
-            double lineGauge = 0.4;
+            double nodeSize = 10;
+            double lineGauge = 0.5;
             SolidColorBrush lineColor = Brushes.White;
+            SolidColorBrush nodeColor = Brushes.LimeGreen;
 
             Model3DGroup model3DGroup = new Model3DGroup();
 
             foreach (var node in graph.Nodes)
             {
-                //int g = (int)((double)node.Value.TotalChildren() / graph.Root.TotalChildren() * 255);
-                byte g = 255;
-                SolidColorBrush cubeColor = new SolidColorBrush(Color.FromRgb(0,  Convert.ToByte(g), 0));
-                model3DGroup.Children.Add(Graphics3D.GetCube(node.Value.Position, new Point3D(cubeSize, cubeSize, cubeSize), cubeColor));
+                GeometryModel3D nodeModel = Graphics3D.GetCube(node.Value.Position, new Point3D(nodeSize, nodeSize, nodeSize), nodeColor);
+                model3DGroup.Children.Add(nodeModel);
             }
 
             foreach (var edge in graph.Edges)
@@ -43,7 +42,7 @@ namespace Walrus2
             }
 
             model3DGroup.Children.Add(Graphics3D.GetCube(new Point3D(0, 0, 0),
-                                                         new Point3D(cubeSize, cubeSize, cubeSize),
+                                                         new Point3D(nodeSize, nodeSize, nodeSize),
                                                          Brushes.Red));
 
             ModelVisual3D modelVisual = new ModelVisual3D();
@@ -81,10 +80,11 @@ namespace Walrus2
             Viewport3D viewport3D = new Viewport3D();
             viewport3D.Children.Add(GetDrawedGraph(graph));
             viewport3D.Children.Add(GetLight());
-            viewport3D.Camera = GetCamera(graph.Root.TotalChildren()*8);
+            viewport3D.Camera = GetCamera(Math.Sqrt(graph.Root.TotalChildren())* 20);
+            
 
             TabItem newTab = new TabItem();
-            newTab.Header = "Graph " + Convert.ToString(tabControl.Items.Count);
+            newTab.Header = graph.Name;
             newTab.Content = viewport3D;
 
             tabControl.Items.Add(newTab);
@@ -149,19 +149,31 @@ namespace Walrus2
             string selectedFile = fileDialog.FileName;
             if (File.Exists(selectedFile))
             {
-                Stopwatch stopwatch = Stopwatch.StartNew();
                 Graph graph = new Graph(selectedFile);
 
                 // graph algorithms
                 graph.SphereAlgorithm();
 
-                stopwatch.Stop();
-                double d = stopwatch.ElapsedMilliseconds;
-
-                textBox.Text += d + " ms \n";
-
                 DrawGraph(graph);
             }
+        }
+
+        private void createButton_Click(object sender, RoutedEventArgs e)
+        {
+            string tmpFile = "tmp.txt";
+            string graphStr = textBox.Text.Replace('\r', ' ');
+            using (StreamWriter sw = new StreamWriter(tmpFile))
+            {
+                sw.Write(graphStr);
+            }
+            
+            Graph graph = new Graph("tmp.txt");
+
+            // graph algorithms
+            graph.SphereAlgorithm();
+
+            DrawGraph(graph);
+            
         }
     }
 }

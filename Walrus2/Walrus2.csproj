@@ -98,6 +98,7 @@
     </Compile>
     <Compile Include="CameraExtensionMethods.cs" />
     <Compile Include="Edge.cs" />
+    <Compile Include="Geometry3D.cs" />
     <Compile Include="Graph.cs" />
     <Compile Include="Graphics3D.cs" />
     <Compile Include="MainWindow.xaml.cs">

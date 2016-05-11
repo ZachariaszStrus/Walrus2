@@ -11,7 +11,7 @@ namespace Walrus2
     {
         private int _totalChildren;
 
-        public const int ChildrenSearchDepth = 5;
+        public const int ChildrenSearchDepth = 10;
 
         public Point3D Position { get; set; }
 

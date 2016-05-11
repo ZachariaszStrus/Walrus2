@@ -49,7 +49,7 @@ namespace Walrus2
             return cube;
         }
 
-        public static GeometryModel3D GetLine(Point3D p0, Point3D p1, SolidColorBrush color, double width = 0.2)
+        public static GeometryModel3D GetLine(Point3D p0, Point3D p1, SolidColorBrush color, double width = 0.5)
         {
             Vector3D delta = new Vector3D(p1.X - p0.X, p1.Y - p0.Y, p1.Z - p0.Z);
             double length = Math.Sqrt(Math.Pow(delta.X, 2) + Math.Pow(delta.Y, 2) + Math.Pow(delta.Z, 2));
@@ -63,15 +63,30 @@ namespace Walrus2
             GeometryModel3D cube = new GeometryModel3D();
             MeshGeometry3D mesh = new MeshGeometry3D();
 
-            mesh.Positions.Add(new Point3D(p0.X, p0.Y - width, p0.Z + width));
-            mesh.Positions.Add(new Point3D(p0.X, p0.Y - width, p0.Z - width));
-            mesh.Positions.Add(new Point3D(p0.X, p0.Y + width, p0.Z + width));
-            mesh.Positions.Add(new Point3D(p0.X, p0.Y + width, p0.Z - width));
+            Point3DCollection points = new Point3DCollection();
 
-            mesh.Positions.Add(new Point3D(p0.X + length, p0.Y - width, p0.Z + width));
-            mesh.Positions.Add(new Point3D(p0.X + length, p0.Y - width, p0.Z - width));
-            mesh.Positions.Add(new Point3D(p0.X + length, p0.Y + width, p0.Z + width));
-            mesh.Positions.Add(new Point3D(p0.X + length, p0.Y + width, p0.Z - width));
+            Vector3D prepVector = Vector3D.CrossProduct(delta, new Vector3D(0, 0, 1));
+            prepVector.Normalize();
+            prepVector *= width;
+
+            double theta = 0;
+            for (int i = 0; i < 4; i++)
+            {
+                Point3D point = p0 + prepVector;
+                Geometry3D.RotatePoint(ref point, p0, delta, theta);
+                points.Add(point);
+                theta += 90;
+            }
+
+            theta = 0;
+            for (int i = 0; i < 4; i++)
+            {
+                Point3D point = p1 + prepVector;
+                Geometry3D.RotatePoint(ref point, p0, delta, theta);
+                points.Add(point);
+                theta += 90;
+            }
+            mesh.Positions = points;
 
             foreach (var t in triangles)
             {
@@ -80,27 +95,8 @@ namespace Walrus2
 
             cube.Geometry = mesh;
             cube.Material = new DiffuseMaterial(color);
-
-            
-            double theta = Math.Atan2(delta.Y, delta.X);
-            double phi = -Math.Atan2(delta.Z, Math.Sqrt(delta.X* delta.X + delta.Y * delta.Y));
-
-            Transform3DGroup transformGroup = new Transform3DGroup();
-            RotateTransform3D transXY = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 0, 1), theta / 2 / Math.PI * 360));
-            transXY.CenterX = p0.X;
-            transXY.CenterY = p0.Y;
-            transXY.CenterZ = p0.Z;
-            RotateTransform3D transZ = new RotateTransform3D(new AxisAngleRotation3D(
-                new Vector3D(-Math.Sin(theta), Math.Cos(theta), 0), phi / 2 / Math.PI * 360));
-            transZ.CenterX = p0.X;
-            transZ.CenterY = p0.Y;
-            transZ.CenterZ = p0.Z;
-
-            transformGroup.Children.Add(transXY);
-            transformGroup.Children.Add(transZ);
-
-            cube.Transform = transformGroup;
             return cube;
         }
+        
     }
 }

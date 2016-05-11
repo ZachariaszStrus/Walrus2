@@ -16,39 +16,33 @@ namespace Walrus2
             Vector delta = new Vector(mousePosition.X - mouseInitialPosition.X,
                                       mousePosition.Y - mouseInitialPosition.Y);
 
-            Point3D newPosition = new Point3D(camera.Position.X, camera.Position.Y, camera.Position.Z);
-
-            double radius = camera.GetRadius();
-            double xyRadius = Math.Sqrt(Math.Pow(camera.Position.X - center.X, 2) +
-                                 Math.Pow(camera.Position.Y - center.Y, 2));
-            var theta = -delta.X / 300;
-            var phi = delta.Y / 300;
-
-            //up-down
+            var theta = delta.X / 700 * 360;
+            var phi = delta.Y / 700 * 360;
             
-            newPosition.Z = camera.Position.Z * Math.Cos(phi) + xyRadius * Math.Sin(phi);
-            xyRadius = xyRadius * Math.Cos(phi) - camera.Position.Z * Math.Sin(phi);
+            var originQuaternion = new Quaternion(camera.Position.X, camera.Position.Y, camera.Position.Z, 0);
+            
+            Vector3D xyVector = Vector3D.CrossProduct((new Vector3D(0, 0, 1)), 
+                                            (new Vector3D(camera.Position.X, camera.Position.Y, camera.Position.Z)));
+            var phiRotation = new Quaternion(xyVector, phi);
+            var conjugatePhi = new Quaternion(xyVector, phi);
+            conjugatePhi.Conjugate();
 
-            newPosition.X = Math.Sqrt(Math.Pow(xyRadius, 2) /
-                                        (1 + Math.Pow(camera.Position.Y / camera.Position.X, 2))) *
-                            (camera.Position.X < 0 ? -1 : 1);
-            newPosition.Y = camera.Position.Y / camera.Position.X * newPosition.X;
+            var thetaRotation = new Quaternion(new Vector3D(0, 0, 1), theta);
+            var conjugateTheta = new Quaternion(new Vector3D(0, 0, 1), theta);
+            conjugateTheta.Conjugate();
 
-            if(xyRadius < 0.01)
+            var rotatedPoint = conjugatePhi * originQuaternion * phiRotation;
+
+            if (rotatedPoint.X * camera.Position.X < 0)
             {
-                newPosition = new Point3D(camera.Position.X, camera.Position.Y, camera.Position.Z);
+                rotatedPoint.X = camera.Position.X;
+                rotatedPoint.Y = camera.Position.Y;
             }
-            
-          
-            //left-right
-            double nx = newPosition.X * Math.Cos(theta) - newPosition.Y * Math.Sin(theta);
-            double ny = newPosition.Y * Math.Cos(theta) + newPosition.X * Math.Sin(theta);
 
-            newPosition.X = nx;
-            newPosition.Y = ny;
+            rotatedPoint = conjugateTheta * rotatedPoint * thetaRotation;
 
-            camera.Position = newPosition;
-            camera.LookDirection = new Vector3D(-camera.Position.X, -camera.Position.Y, -camera.Position.Z);
+            camera.Position = new Point3D(rotatedPoint.X, rotatedPoint.Y, rotatedPoint.Z);
+            camera.LookDirection = new Point3D() - camera.Position;
             camera.UpDirection = new Vector3D(0, 0, 1);
         }
 
@@ -89,5 +83,6 @@ namespace Walrus2
                                  Math.Pow(camera.Position.Y - center.Y, 2) +
                                  Math.Pow(camera.Position.Z - center.Z, 2));
         }
+
     }
 }
