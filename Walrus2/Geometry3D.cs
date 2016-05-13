@@ -24,6 +24,8 @@ namespace Walrus2
 
         public static void RotatePoint(ref Point3D point, Point3D center, Vector3D axis, double angle)
         {
+            if (axis.Length == 0) axis = new Vector3D(0, 0, 1);
+
             Point3D newPoint = new Point3D(point.X - center.X, point.Y - center.Y, point.Z - center.Z);
             RotatePoint(ref newPoint, axis, angle);
             newPoint += (center - new Point3D());

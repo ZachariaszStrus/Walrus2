@@ -3,20 +3,77 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
+using System.Windows.Media.Media3D;
 
 namespace Walrus2
 {
     public class Edge
     {
-        public Node StartNode { get; set; }
+        private Node _startNode;
+        public Node StartNode
+        {
+            get
+            {
+                return _startNode;
+            }
+            set
+            {
+                _startNode = value;
+                RefreshGeometryModel();
+            }
+        }
 
-        public Node EndNode { get; set; }
+        private Node _endNode;
+        public Node EndNode
+        {
+            get
+            {
+                return _endNode;
+            }
+            set
+            {
+                _endNode = value;
+                RefreshGeometryModel();
+            }
+        }
 
+        // display -------------------------------
+        public GeometryModel3D GeometryModel { get; private set; }
+
+        public double Gauge { get; private set; }
+
+        public SolidColorBrush ModelColor { get; private set; }
+        // ---------------------------------------
 
         public Edge(Node n1, Node n2)
         {
+            Gauge = 0.5;
+            ModelColor = Brushes.White;
+
             StartNode = n1;
             EndNode = n2;
+        }
+
+        public Edge()
+        {
+            Gauge = 0.5;
+            ModelColor = Brushes.White;
+        }
+
+        public void RefreshGeometryModel()
+        {
+            if(StartNode != null && EndNode != null)
+            {
+                if(GeometryModel != null)
+                {
+                    Graphics3D.RefreshLineGeometryModel(GeometryModel, StartNode.Position, EndNode.Position, Gauge);
+                }
+                else
+                {
+                    GeometryModel = Graphics3D.GetLine(StartNode.Position, EndNode.Position, ModelColor, Gauge);
+                }
+            }
         }
     }
 }
