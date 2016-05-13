@@ -78,7 +78,7 @@ namespace Walrus2
             Grid content = new Grid();
 
             Viewport3D viewport3D = new Viewport3D();
-            viewport3D.Margin = new Thickness(0, 0, 0, 50);
+            viewport3D.Margin = new Thickness(0, 0, 0, 55);
             viewport3D.Children.Add(GetDrawedGraph(graph));
             viewport3D.Children.Add(GetLight());
             viewport3D.Camera = GetCamera(Math.Sqrt(graph.Root.TotalChildren()) * 20);
@@ -112,12 +112,62 @@ namespace Walrus2
             tabControl.SelectedItem = newTab;
         }
 
+        public void ChangeRoot(TabItem selectedTab, MouseButtonEventArgs e)
+        {
+            var grid = selectedTab.Content as Grid;
+            var viewport3D = grid.Children[0] as Viewport3D;
+
+            Point mouse_pos = e.GetPosition(viewport3D);
+            HitTestResult result = VisualTreeHelper.HitTest(viewport3D, mouse_pos);
+            RayMeshGeometry3DHitTestResult mesh_result =
+                result as RayMeshGeometry3DHitTestResult;
+
+            if (mesh_result != null)
+            {
+                var graph = Graphs[selectedTab];
+                Node closestNode = null;
+                double delta = 0;
+                foreach (var node in graph.Nodes.Values)
+                {
+                    if (closestNode == null)
+                    {
+                        closestNode = node;
+                        delta = (mesh_result.PointHit - node.Position).Length;
+                    }
+                    else if ((mesh_result.PointHit - node.Position).Length < delta)
+                    {
+                        closestNode = node;
+                        delta = (mesh_result.PointHit - node.Position).Length;
+                    }
+                }
+                if (closestNode != graph.Root)
+                {
+                    var radiusSlider = grid.Children[1] as Slider;
+                    var angleSlider = grid.Children[2] as Slider;
+
+                    graph.ChangeRoot(closestNode);
+                    radiusSlider.Value = 1;
+
+                    angleSlider.Value = 1;
+                    viewport3D.Children.Clear();
+                    viewport3D.Children.Add(GetDrawedGraph(graph));
+                    viewport3D.Children.Add(GetLight());
+                }
+            }
+        }
+
         // controls ---------------------------------------------------------------------
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if(e.LeftButton == MouseButtonState.Pressed)
+            MouseInitialPosition = e.GetPosition(sender as IInputElement);
+
+            if(e.ClickCount == 2)
             {
-                MouseInitialPosition = e.GetPosition(sender as IInputElement);
+                TabItem selectedTab = tabControl.SelectedItem as TabItem;
+                if (selectedTab != null)
+                {
+                    ChangeRoot(selectedTab, e);
+                }
             }
         }
 
@@ -137,7 +187,7 @@ namespace Walrus2
                         Point relativePoint = viewport3D.TransformToAncestor(this).Transform(new Point(0, 0));
                         Point currentMousePosition = e.GetPosition(sender as IInputElement);
                         if (currentMousePosition.X > relativePoint.X && 
-                            currentMousePosition.Y > relativePoint.Y + 20 &&
+                            currentMousePosition.Y > relativePoint.Y &&
                             !radiusSlider.IsMouseCaptureWithin && !angleSlider.IsMouseCaptureWithin)
                         {
                             PerspectiveCamera camera = viewport3D.Camera as PerspectiveCamera;
@@ -152,9 +202,12 @@ namespace Walrus2
         private void Window_Wheel(object sender, MouseWheelEventArgs e)
         {
             var grid = tabControl.SelectedContent as Grid;
-            var viewport3D = grid.Children[0] as Viewport3D;
-            PerspectiveCamera camera = viewport3D.Camera as PerspectiveCamera;
-            camera.MoveWithMouseWheel(e.Delta, new Point3D(0, 0, 0));
+            if(grid != null)
+            {
+                var viewport3D = grid.Children[0] as Viewport3D;
+                PerspectiveCamera camera = viewport3D.Camera as PerspectiveCamera;
+                camera.MoveWithMouseWheel(e.Delta, new Point3D(0, 0, 0));
+            }
         }
 
         private void CloseTab_Clicked(object sender, RoutedEventArgs e)
@@ -209,7 +262,7 @@ namespace Walrus2
             if (selectedTab != null)
             {
                 Graph graph = Graphs[selectedTab];
-                graph.ChangeChildrenAngle(radiusSlider.Value, angleSlider.Value);
+                graph.AdjustGraph(radiusSlider.Value, angleSlider.Value);
             }
         }
     }

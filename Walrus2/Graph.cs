@@ -83,7 +83,7 @@ namespace Walrus2
             };
             Func<Node, double> getRadius = delegate (Node n)
             {
-                return Math.Pow(radiusFactor, 1.5) * Math.Sqrt((double)n.TotalChildren()) * 10 + n.Parent.Children.Count * 4;
+                return Math.Pow(radiusFactor, 1.5) * Math.Sqrt((double)n.TotalChildren()) * 7 + n.Parent.Children.Count * 7;
             };
             Func<int, double, double> getPhi = delegate (int l, double rad)
             {
@@ -157,9 +157,17 @@ namespace Walrus2
             }
         }
 
-        public void ChangeChildrenAngle(double radiusFactor = 1, double angleFactor = 1)
+        public void AdjustGraph(double radiusFactor = 1, double angleFactor = 1)
         {
             RecursiveSphereAlgorithm(Root, radiusFactor, angleFactor);
         }
+
+        public void ChangeRoot(Node newRoot)
+        {
+            Root = newRoot;
+            Root.Position = new Point3D(0, 0, 0);
+            RecursiveSphereAlgorithm(Root);
+        }
+        
     }
 }
