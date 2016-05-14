@@ -8,35 +8,34 @@
         xmlns:dragablz="http://dragablz.net/winfx/xaml/dragablz" 
         x:Class="Walrus2.MainWindow"
         mc:Ignorable="d"
-        Title="MainWindow" Height="601" Width="1087" ResizeMode="NoResize" MouseDown="Window_MouseDown" MouseMove="Window_MouseMove" MouseWheel="Window_Wheel" Background="Black">
+        Title="MainWindow" Height="651" Width="1083" ResizeMode="NoResize" MouseMove="Window_MouseMove" MouseWheel="Window_Wheel" Background="Black" MouseDown="Window_MouseDown">
     <Window.Resources>
-        <ContextMenu x:Key="tabContextMenu">
-            <MenuItem Header="Close current tab" Click="CloseTab_Clicked" />
-            <MenuItem Header="Close all tabs" Click="CloseAllTabs_Clicked"/>
+        <ContextMenu x:Key="GraphContextMenu" Opened="GraphContextMenu_Opened">
+            <MenuItem Header="" IsEnabled="False"/>
+            <MenuItem Header="" IsEnabled="False"/>
+            <Separator/>
+            <MenuItem x:Name="SetRootContextMenuItem" Header="Set as root" Click="SetRootContextMenuItem_Click"/>
+            <MenuItem x:Name="ResetRootContextMenuItem" Header="Reset as root" Click="ResetRootContextMenuItem_Click"/>
+            <Separator/>
+            <MenuItem x:Name="CollapseDescendantsContextMenuItem" Header="Collapse descendants" Click="CollapseDescendantsContextMenuItem_Click"/>
+            <MenuItem x:Name="ExpandDescendantsContextMenuItem" Header="Expand descendants" Click="ExpandDescendantsContextMenuItem_Click"/>
+            <MenuItem x:Name="ExpandChildrenContextMenuItem" Header="Expand children" Click="ExpandChildrenContextMenuItem_Click"/>
         </ContextMenu>
     </Window.Resources>
-    <Grid Background="Black" Margin="0,0,-6,-4" >
-        <TextBox x:Name="textBox" 
-			HorizontalAlignment="Left" 
-			Height="430" 
-			Margin="10,65,0,0" 
-			TextWrapping="Wrap" 
-			VerticalAlignment="Top" 
-			Width="211" Background="#FF131313" Foreground="White" AcceptsReturn="True"/>
+    <Grid Background="Black" Margin="0,0,10,10" >
 
         <dragablz:TabablzControl x:Name="tabControl" 
-                                 Background="#FF131313" 
-                                 HorizontalAlignment="Left"
-                                 Margin="226,10,0,0" 
-                                 VerticalAlignment="Top" 
-                                 Height="540" Width="834" 
+                                 Background="#FF131313"
+                                 Margin="10,41,0,0" Width="1047" 
                                  IsManipulationEnabled="False" 
                                  ShowDefaultCloseButton="True" 
-                                 RenderTransformOrigin="0,0"
-                                 ContextMenu="{StaticResource ResourceKey=tabContextMenu}">
-        </dragablz:TabablzControl>
-        <Button x:Name="loadButton" Content="Load graph" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="211" Height="50" Background="#FF131313" Foreground="White" Click="loadButton_Click" />
-        <Button x:Name="createButton" Content="Create graph" HorizontalAlignment="Left" Margin="10,500,0,0" VerticalAlignment="Top" Width="211" Height="50" Background="#FF131313" Foreground="White" Click="createButton_Click" />
+                                 RenderTransformOrigin="0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="561"/>
+        <Menu x:Name="menu" HorizontalAlignment="Left" VerticalAlignment="Top" Width="1060" Background="Black" FontSize="14">
+            <MenuItem Header="    File" Foreground="White" Width="65" Height="30" FontSize="14" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="#FF131313" BorderThickness="0" Margin="10,0,0,0">
+                <MenuItem x:Name="openFile" Header="Open" Click="OpenFileMenuItem_Click" Foreground="White" Background="Black" BorderThickness="0" Height="30" FontSize="14"/>
+                <MenuItem Header="Exit" Foreground="White" Background="Black" BorderThickness="0" Height="25" FontSize="14"/>
+            </MenuItem>
+        </Menu>
 
     </Grid>
 </Window>

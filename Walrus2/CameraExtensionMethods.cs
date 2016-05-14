@@ -10,12 +10,8 @@ namespace Walrus2
 {
     public static class CameraExtensionMethods
     {
-        public static void RotateWithMouse(this PerspectiveCamera camera, Point mouseInitialPosition,
-            Point mousePosition, Point3D center)
+        public static void RotateWithMouse(this PerspectiveCamera camera, Vector delta, Point3D center)
         {
-            Vector delta = new Vector(mousePosition.X - mouseInitialPosition.X,
-                                      mousePosition.Y - mouseInitialPosition.Y);
-
             var theta = delta.X / 700 * 360;
             var phi = delta.Y / 700 * 360;
             

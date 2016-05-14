@@ -10,10 +10,13 @@ namespace Walrus2
 {
     public class Node : IComparable<Node>
     {
+        static int _maxChildrenCount = 1;
 
         private int _totalChildren;
 
         public const int ChildrenSearchDepth = 10;
+
+        public string ID { get; set; }
 
         private Point3D _position;
         public Point3D Position
@@ -37,24 +40,45 @@ namespace Walrus2
         public Node Parent { get; set; }
 
         // display -------------------------------
+        public bool IsVisible { get; set; }
+
         public GeometryModel3D GeometryModel { get; private set; }
         
         public Point3D Dimensions { get; private set; }
 
-        public SolidColorBrush ModelColor { get; private set; }
+        public Color ModelColor { get; private set; }
         // ---------------------------------------
 
-        public Node()
+        public Node(string id)
         {
+            ID = id;
             _totalChildren = 0;
+            IsVisible = true;
             Dimensions = new Point3D(10, 10, 10);
-            ModelColor = Brushes.LimeGreen;
+            ModelColor = Color.FromRgb(0, 255, 0);
 
             Parent = null;
             Children = new List<Node>();
             Edges = new Dictionary<Node, Edge>();
             
             Position = new Point3D();
+        }
+
+        public Node(Node n)
+        {
+            _totalChildren = n._totalChildren;
+            IsVisible = n.IsVisible;
+            Dimensions = n.Dimensions;
+            ModelColor = n.ModelColor;
+
+            Parent = n.Parent;
+            Children = new List<Node>();
+            n.Children.ForEach(c => Children.Add(new Node(c)));
+
+            Edges = new Dictionary<Node, Edge>();
+            Children.ForEach(c => Edges.Add(c, new Edge(this, c)));
+
+            Position = n.Position;
         }
 
         private void RefreshGeometryModel()
@@ -65,8 +89,27 @@ namespace Walrus2
             }
             else
             {
-                GeometryModel = Graphics3D.GetCube(Position, Dimensions, ModelColor);
+                GeometryModel = Graphics3D.GetCube(Position, Dimensions, new SolidColorBrush(ModelColor));
             }
+        }
+
+        private void RefreshColor()
+        {
+            double p = (double)Children.Count / _maxChildrenCount;
+            double r = 0;
+            double g = 0;
+            if (p > 0.5)
+            {
+                r = 255;
+                g = 2 * (1.0 - p) * 255;
+            }
+            else
+            {
+                g = 255;
+                r = 2 * p * 255;
+            }
+            ModelColor = Color.FromRgb(Convert.ToByte(r), Convert.ToByte(g), 0);
+            GeometryModel.Material = new DiffuseMaterial(new SolidColorBrush(ModelColor));
         }
 
         private void RefreshEdge(Node child)
@@ -78,6 +121,8 @@ namespace Walrus2
         {
             Children.Add(child);
             Edges.Add(child, new Edge(this, child));
+            _maxChildrenCount = Children.Count > _maxChildrenCount ? Children.Count : _maxChildrenCount;
+            RefreshColor();
         }
 
         public int TotalChildren(int layer = ChildrenSearchDepth)
@@ -93,12 +138,13 @@ namespace Walrus2
             _totalChildren = Children.Sum(c => c.TotalChildren(layer - 1));
             return _totalChildren;
         }
-
+        
         public void SetParents()
         {
             foreach (var child in Children)
             {
                 child.Parent = this;
+                child.SetParents();
             }
         }
 

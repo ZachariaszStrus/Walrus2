@@ -13,22 +13,29 @@ namespace Walrus2
         public Dictionary<string, Node> Nodes { get; set; }
 
         public Node Root { get; set; }
-        
+
+        public Node DefaultRoot { get; set; }
+
+        public Model3DGroup GeometryModelGroup { get; set; }
+
+
         public Graph(string file)
         {
+            GeometryModelGroup = new Model3DGroup();
             Name = Path.GetFileName(file);
             Nodes = new Dictionary<string, Node>();
 
             LoadFromFile(file);
-            
-            foreach (var node in Nodes)
-            {
-                node.Value.SetParents();
-            }
-            
+            Root.SetParents();
+
+            Root.Position = new Point3D(0, 0, 0);
+            Root.IsVisible = true;
             RecursiveSphereAlgorithm(Root);
+
+            SetRoot(Root);
+            DefaultRoot = Root;
         }
-        
+
         public void LoadFromFile(string file)
         {
             using (StreamReader sr = new StreamReader(file))
@@ -43,27 +50,27 @@ namespace Walrus2
                     }
                     if (!Nodes.ContainsKey(currentLineArray[0].Trim()))
                     {
-                        Nodes.Add(currentLineArray[0].Trim(), new Node());
-                    }
-                    for (var j = 1; j < currentLineArray.Length; j++)
-                    {
-                        if (currentLineArray[j] == "0")
-                        {
-                            break;
-                        }
-                        if (!Nodes.ContainsKey(currentLineArray[j].Trim()))
-                        {
-                            Nodes.Add(currentLineArray[j].Trim(), new Node());
-                            Nodes[currentLineArray[0].Trim()].AddChild(Nodes[currentLineArray[j].Trim()]);
-                        }
+                        Nodes.Add(currentLineArray[0].Trim(), new Node(currentLineArray[0].Trim()));
                     }
                     if (i == 0)
                     {
                         Root = Nodes[currentLineArray[0]];
                     }
+                    for (var j = 1; j < currentLineArray.Length; j++)
+                    {
+                        if (currentLineArray[j] == "0") break;
+                        if (!Nodes.ContainsKey(currentLineArray[j].Trim()))
+                        {
+                            Nodes.Add(currentLineArray[j].Trim(), new Node(currentLineArray[j].Trim()));
+                            Nodes[currentLineArray[0].Trim()].AddChild(Nodes[currentLineArray[j].Trim()]);
+                        }
+                    }
+                    
                 }
             }
         }
+
+        // main algorithm --------------------------------------------------------------------
 
         public void RecursiveSphereAlgorithm(Node parent, double radiusFactor = 1, double angleFactor = 1)
         {
@@ -105,6 +112,8 @@ namespace Walrus2
             {
                 foreach (var child in parent.Children)
                 {
+                    if (!child.IsVisible) continue;
+
                     double radius = getRadius(child);
                     Point3D newPosition = new Point3D(radius, 0, 0);
 
@@ -125,6 +134,8 @@ namespace Walrus2
             {
                 foreach (var child in parent.Children)
                 {
+                    if (!child.IsVisible) continue;
+
                     double radius = getRadius(child);
                     if (doneInLayer == toDoInLayer)
                     {
@@ -157,17 +168,66 @@ namespace Walrus2
             }
         }
 
+        // changing graph --------------------------------------------------------------------
+
         public void AdjustGraph(double radiusFactor = 1, double angleFactor = 1)
         {
             RecursiveSphereAlgorithm(Root, radiusFactor, angleFactor);
         }
 
-        public void ChangeRoot(Node newRoot)
+        public void SetRoot(Node newRoot)
         {
+            GeometryModelGroup.Children.Clear();
+            foreach (var node in Nodes.Values)
+            {
+                node.IsVisible = false;
+            }
             Root = newRoot;
+            ExpandDescendants(Root);
+            GeometryModelGroup.Children.Add(Root.GeometryModel);
             Root.Position = new Point3D(0, 0, 0);
+            Root.IsVisible = true;
             RecursiveSphereAlgorithm(Root);
         }
-        
+
+        public void ResetRoot()
+        {
+            SetRoot(DefaultRoot);
+        }
+
+        public void CollapseDescendants(Node node)
+        {
+            node.Children.ForEach(child =>
+            {
+                child.IsVisible = false;
+                node.Edges[child].IsVisible = false;
+                GeometryModelGroup.Children.Remove(child.GeometryModel);
+                GeometryModelGroup.Children.Remove(node.Edges[child].GeometryModel);
+                CollapseDescendants(child);
+            });
+        }
+
+        public void ExpandDescendants(Node node)
+        {
+            node.Children.ForEach(child =>
+            {
+                child.IsVisible = true;
+                node.Edges[child].IsVisible = true;
+                GeometryModelGroup.Children.Add(child.GeometryModel);
+                GeometryModelGroup.Children.Add(node.Edges[child].GeometryModel);
+                ExpandDescendants(child);
+            });
+        }
+
+        public void ExpandChildren(Node node)
+        {
+            node.Children.ForEach(child =>
+            {
+                child.IsVisible = true;
+                node.Edges[child].IsVisible = true;
+                GeometryModelGroup.Children.Add(child.GeometryModel);
+                GeometryModelGroup.Children.Add(node.Edges[child].GeometryModel);
+            });
+        }
     }
 }

@@ -19,32 +19,69 @@ namespace Walrus2
 
         public Point MouseInitialPosition { get; set; }
 
+        public Node SelectedNode { get; set; }
+        
+        public TabItem SelectedTab
+        {
+            get
+            {
+                return tabControl.SelectedItem as TabItem;
+            }
+        }
+
+        public Grid SelectedGrid
+        {
+            get
+            {
+                return SelectedTab.Content as Grid;
+            }
+        }
+
+        public Viewport3D SelectedViewport3D
+        {
+            get
+            {
+                return SelectedGrid.Children[0] as Viewport3D;
+            }
+        }
+
+        public Slider SelectedRadiusSlider
+        {
+            get
+            {
+                return SelectedGrid.Children[1] as Slider;
+            }
+        }
+
+        public Slider SelectedAngleSlider
+        {
+            get
+            {
+                return SelectedGrid.Children[2] as Slider;
+            }
+        }
+
+        public Graph SelectedGraph
+        {
+            get
+            {
+                return SelectedTab != null ? Graphs[SelectedTab] : null;
+            }
+        }
+
+
         public MainWindow()
         {
             InitializeComponent();
             Graphs = new Dictionary<TabItem, Graph>();
         }
-
-        private void RecursiveGraphDrawing(Model3DGroup model3DGroup, Node node)
-        {
-            model3DGroup.Children.Add(node.GeometryModel);
-
-            foreach (var edge in node.Edges.Values)
-            {
-                model3DGroup.Children.Add(edge.GeometryModel);
-            }
-            node.Children.ForEach(c => RecursiveGraphDrawing(model3DGroup, c));
-        }
+        
+        // drawing graph ---------------------------------------------------------------------
 
         private ModelVisual3D GetDrawedGraph(Graph graph)
         {
-            Model3DGroup model3DGroup = new Model3DGroup();
-            model3DGroup.Children.Add(graph.Root.GeometryModel);
-
-            RecursiveGraphDrawing(model3DGroup, graph.Root);
-            
             ModelVisual3D modelVisual = new ModelVisual3D();
-            modelVisual.Content = model3DGroup;
+            modelVisual.Content = graph.GeometryModelGroup;
             return modelVisual;
         }
 
@@ -78,6 +115,7 @@ namespace Walrus2
             Grid content = new Grid();
 
             Viewport3D viewport3D = new Viewport3D();
+            viewport3D.ContextMenu = TryFindResource("GraphContextMenu") as ContextMenu;
             viewport3D.Margin = new Thickness(0, 0, 0, 55);
             viewport3D.Children.Add(GetDrawedGraph(graph));
             viewport3D.Children.Add(GetLight());
@@ -111,24 +149,87 @@ namespace Walrus2
             tabControl.Items.Add(newTab);
             tabControl.SelectedItem = newTab;
         }
+        
+        // moving camera ---------------------------------------------------------------------
 
-        public void ChangeRoot(TabItem selectedTab, MouseButtonEventArgs e)
+        private void Window_MouseMove(object sender, MouseEventArgs e)
         {
-            var grid = selectedTab.Content as Grid;
-            var viewport3D = grid.Children[0] as Viewport3D;
+            if (SelectedTab != null && e.LeftButton == MouseButtonState.Pressed)
+            {
+                if (SelectedViewport3D.IsDescendantOf(this))
+                {
+                    Point currentMousePosition = e.GetPosition(SelectedViewport3D);
+                    if (currentMousePosition.X > 0 &&
+                        currentMousePosition.Y > 0 &&
+                        currentMousePosition.X < SelectedViewport3D.ActualWidth &&
+                        currentMousePosition.Y < SelectedViewport3D.ActualHeight &&
+                        !SelectedRadiusSlider.IsMouseCaptureWithin && !SelectedAngleSlider.IsMouseCaptureWithin)
+                    {
+                        PerspectiveCamera camera = SelectedViewport3D.Camera as PerspectiveCamera;
+                        Vector delta = currentMousePosition - MouseInitialPosition;
+                        if(delta.Length < 50)
+                            camera.RotateWithMouse(delta, new Point3D(0, 0, 0));
+                    }
+                    MouseInitialPosition = currentMousePosition;
+                }
+            }
+        }
 
-            Point mouse_pos = e.GetPosition(viewport3D);
-            HitTestResult result = VisualTreeHelper.HitTest(viewport3D, mouse_pos);
+        private void Window_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (SelectedViewport3D != null)
+            {
+                MouseInitialPosition = e.GetPosition(SelectedViewport3D);
+            }
+        }
+
+        private void Window_Wheel(object sender, MouseWheelEventArgs e)
+        {
+            if(SelectedTab != null)
+            {
+                PerspectiveCamera camera = SelectedViewport3D.Camera as PerspectiveCamera;
+                camera.MoveWithMouseWheel(e.Delta, new Point3D(0, 0, 0));
+            }
+        }
+        
+        // changing graph --------------------------------------------------------------------
+
+        private void slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (SelectedTab != null)
+            {
+                SelectedGraph.AdjustGraph(SelectedRadiusSlider.Value, SelectedAngleSlider.Value);
+            }
+        }
+
+        private void OpenFileMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Forms.OpenFileDialog fileDialog =
+                new System.Windows.Forms.OpenFileDialog();
+            fileDialog.ShowDialog();
+
+            string selectedFile = fileDialog.FileName;
+            if (File.Exists(selectedFile))
+            {
+                DrawGraph(new Graph(selectedFile));
+            }
+        }
+        
+        private void GraphContextMenu_Opened(object sender, RoutedEventArgs e)
+        {
+            Point mouse_pos = MouseInitialPosition;
+            HitTestResult result = VisualTreeHelper.HitTest(SelectedViewport3D, mouse_pos);
             RayMeshGeometry3DHitTestResult mesh_result =
                 result as RayMeshGeometry3DHitTestResult;
 
             if (mesh_result != null)
             {
-                var graph = Graphs[selectedTab];
                 Node closestNode = null;
                 double delta = 0;
-                foreach (var node in graph.Nodes.Values)
+                foreach (var node in SelectedGraph.Nodes.Values)
                 {
+                    if (!node.IsVisible) continue;
+
                     if (closestNode == null)
                     {
                         closestNode = node;
@@ -140,129 +241,76 @@ namespace Walrus2
                         delta = (mesh_result.PointHit - node.Position).Length;
                     }
                 }
-                if (closestNode != graph.Root)
+
+                SelectedNode = closestNode;
+                var graphContextMenu = TryFindResource("GraphContextMenu") as ContextMenu;
+                if (SelectedNode.Children.Count == 0)
                 {
-                    var radiusSlider = grid.Children[1] as Slider;
-                    var angleSlider = grid.Children[2] as Slider;
-
-                    graph.ChangeRoot(closestNode);
-                    radiusSlider.Value = 1;
-
-                    angleSlider.Value = 1;
-                    viewport3D.Children.Clear();
-                    viewport3D.Children.Add(GetDrawedGraph(graph));
-                    viewport3D.Children.Add(GetLight());
-                }
-            }
-        }
-
-        // controls ---------------------------------------------------------------------
-        private void Window_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            MouseInitialPosition = e.GetPosition(sender as IInputElement);
-
-            if(e.ClickCount == 2)
-            {
-                TabItem selectedTab = tabControl.SelectedItem as TabItem;
-                if (selectedTab != null)
-                {
-                    ChangeRoot(selectedTab, e);
-                }
-            }
-        }
-
-        private void Window_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (tabControl.SelectedItem != null)
-            {
-                TabItem selectedTab = tabControl.SelectedItem as TabItem;
-                var grid = selectedTab.Content as Grid;
-                var viewport3D = grid.Children[0] as Viewport3D;
-                var radiusSlider = grid.Children[1] as Slider;
-                var angleSlider = grid.Children[2] as Slider;
-                if (e.LeftButton == MouseButtonState.Pressed && viewport3D != null)
-                {
-                    if (viewport3D.IsDescendantOf(this))
+                    (graphContextMenu.Items[0] as MenuItem).Header = "ID : " + SelectedNode.ID;
+                    foreach (var item in graphContextMenu.Items)
                     {
-                        Point relativePoint = viewport3D.TransformToAncestor(this).Transform(new Point(0, 0));
-                        Point currentMousePosition = e.GetPosition(sender as IInputElement);
-                        if (currentMousePosition.X > relativePoint.X && 
-                            currentMousePosition.Y > relativePoint.Y &&
-                            !radiusSlider.IsMouseCaptureWithin && !angleSlider.IsMouseCaptureWithin)
-                        {
-                            PerspectiveCamera camera = viewport3D.Camera as PerspectiveCamera;
-                            camera.RotateWithMouse(MouseInitialPosition, currentMousePosition, new Point3D(0, 0, 0));
-                            MouseInitialPosition = e.GetPosition(sender as IInputElement);
-                        }
+                        var menuItem = item as MenuItem;
+                        if(menuItem != null)
+                            menuItem.Visibility = Visibility.Collapsed;
+                    }
+                    (graphContextMenu.Items[0] as MenuItem).Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    (graphContextMenu.Items[0] as MenuItem).Header = "ID : " + SelectedNode.ID;
+                    (graphContextMenu.Items[1] as MenuItem).Header = "Children : " + SelectedNode.Children.Count;
+                    foreach (var item in graphContextMenu.Items)
+                    {
+                        var menuItem = item as MenuItem;
+                        if (menuItem != null)
+                            menuItem.Visibility = Visibility.Visible;
                     }
                 }
             }
         }
 
-        private void Window_Wheel(object sender, MouseWheelEventArgs e)
+        private void CollapseDescendantsContextMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            var grid = tabControl.SelectedContent as Grid;
-            if(grid != null)
+            SelectedGraph.CollapseDescendants(SelectedNode);
+        }
+
+        private void ExpandDescendantsContextMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            SelectedGraph.CollapseDescendants(SelectedNode);
+            SelectedGraph.ExpandDescendants(SelectedNode);
+            SelectedGraph.RecursiveSphereAlgorithm(SelectedNode, SelectedRadiusSlider.Value, SelectedAngleSlider.Value);
+        }
+
+        private void ExpandChildrenContextMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            SelectedGraph.CollapseDescendants(SelectedNode);
+            SelectedGraph.ExpandChildren(SelectedNode);
+            SelectedGraph.RecursiveSphereAlgorithm(SelectedNode, SelectedRadiusSlider.Value, SelectedAngleSlider.Value);
+        }
+
+
+        // changing root ----------------------------------------------------------------------
+
+        private void ResetRootContextMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (SelectedTab != null)
             {
-                var viewport3D = grid.Children[0] as Viewport3D;
-                PerspectiveCamera camera = viewport3D.Camera as PerspectiveCamera;
-                camera.MoveWithMouseWheel(e.Delta, new Point3D(0, 0, 0));
+                if (SelectedGraph.DefaultRoot != SelectedGraph.Root)
+                    SelectedGraph.ResetRoot();
             }
         }
 
-        private void CloseTab_Clicked(object sender, RoutedEventArgs e)
+        private void SetRootContextMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            TabItem selectedTab = tabControl.SelectedItem as TabItem;
-            if(selectedTab  != null)
+            TabItem SelectedTab = tabControl.SelectedItem as TabItem;
+            if (SelectedTab != null)
             {
-                tabControl.Items.Remove(selectedTab);
-            }
-        }
-
-        private void CloseAllTabs_Clicked(object sender, RoutedEventArgs e)
-        {
-            tabControl.Items.Clear();
-        }
-
-        private void loadButton_Click(object sender, RoutedEventArgs e)
-        {
-            System.Windows.Forms.OpenFileDialog fileDialog =
-                new System.Windows.Forms.OpenFileDialog();
-            fileDialog.ShowDialog();
-
-            string selectedFile = fileDialog.FileName;
-            if (File.Exists(selectedFile))
-            {
-                Graph graph = new Graph(selectedFile);
-                DrawGraph(graph);
-            }
-        }  
-
-        private void createButton_Click(object sender, RoutedEventArgs e)
-        {
-            string tmpFile = "tmp.txt";
-            string graphStr = textBox.Text.Replace('\r', ' ');
-            using (StreamWriter sw = new StreamWriter(tmpFile))
-            {
-                sw.Write(graphStr);
-            }
-            
-            Graph graph = new Graph("tmp.txt");
-
-            DrawGraph(graph);
-            
-        }
-
-        private void slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            TabItem selectedTab = tabControl.SelectedItem as TabItem;
-            var grid = selectedTab.Content as Grid;
-            var radiusSlider = grid.Children[1] as Slider;
-            var angleSlider = grid.Children[2] as Slider;
-            if (selectedTab != null)
-            {
-                Graph graph = Graphs[selectedTab];
-                graph.AdjustGraph(radiusSlider.Value, angleSlider.Value);
+                if (SelectedNode != SelectedGraph.Root)
+                {
+                    SelectedRadiusSlider.Value = 1;
+                    SelectedAngleSlider.Value = 1;
+                    SelectedGraph.SetRoot(SelectedNode);
+                }
             }
         }
     }

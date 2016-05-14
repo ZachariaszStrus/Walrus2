@@ -39,6 +39,8 @@ namespace Walrus2
         }
 
         // display -------------------------------
+        public bool IsVisible { get; set; }
+
         public GeometryModel3D GeometryModel { get; private set; }
 
         public double Gauge { get; private set; }
@@ -49,16 +51,11 @@ namespace Walrus2
         public Edge(Node n1, Node n2)
         {
             Gauge = 0.5;
+            IsVisible = true;
             ModelColor = Brushes.White;
 
             StartNode = n1;
             EndNode = n2;
-        }
-
-        public Edge()
-        {
-            Gauge = 0.5;
-            ModelColor = Brushes.White;
         }
 
         public void RefreshGeometryModel()
