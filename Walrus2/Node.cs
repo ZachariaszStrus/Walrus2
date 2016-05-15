@@ -48,9 +48,11 @@ namespace Walrus2
 
         public Color ModelColor { get; private set; }
         // ---------------------------------------
+        
 
-        public Node(string id)
+        public Node(string id, Node parent = null)
         {
+            Parent = parent;
             ID = id;
             _totalChildren = 0;
             IsVisible = true;
@@ -60,7 +62,7 @@ namespace Walrus2
             Parent = null;
             Children = new List<Node>();
             Edges = new Dictionary<Node, Edge>();
-            
+
             Position = new Point3D();
         }
 
@@ -93,7 +95,7 @@ namespace Walrus2
             }
         }
 
-        private void RefreshColor()
+        public void RefreshColor()
         {
             double p = (double)Children.Count / _maxChildrenCount;
             double r = 0;
@@ -122,7 +124,6 @@ namespace Walrus2
             Children.Add(child);
             Edges.Add(child, new Edge(this, child));
             _maxChildrenCount = Children.Count > _maxChildrenCount ? Children.Count : _maxChildrenCount;
-            RefreshColor();
         }
 
         public int TotalChildren(int layer = ChildrenSearchDepth)
@@ -139,18 +140,14 @@ namespace Walrus2
             return _totalChildren;
         }
         
-        public void SetParents()
-        {
-            foreach (var child in Children)
-            {
-                child.Parent = this;
-                child.SetParents();
-            }
-        }
-
         public int CompareTo(Node other)
         {
             return other.TotalChildren(ChildrenSearchDepth) - TotalChildren(ChildrenSearchDepth);
+        }
+
+        public override string ToString()
+        {
+            return ID;
         }
     }
 }

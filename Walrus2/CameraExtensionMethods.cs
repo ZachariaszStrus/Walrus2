@@ -10,35 +10,27 @@ namespace Walrus2
 {
     public static class CameraExtensionMethods
     {
-        public static void RotateWithMouse(this PerspectiveCamera camera, Vector delta, Point3D center)
+        public static void RotateWithMouse(this PerspectiveCamera camera, Vector delta)
         {
+            var center = camera.Position + camera.LookDirection;
             var theta = delta.X / 700 * 360;
             var phi = delta.Y / 700 * 360;
             
-            var originQuaternion = new Quaternion(camera.Position.X, camera.Position.Y, camera.Position.Z, 0);
-            
-            Vector3D xyVector = Vector3D.CrossProduct((new Vector3D(0, 0, 1)), 
-                                            (new Vector3D(camera.Position.X, camera.Position.Y, camera.Position.Z)));
-            var phiRotation = new Quaternion(xyVector, phi);
-            var conjugatePhi = new Quaternion(xyVector, phi);
-            conjugatePhi.Conjugate();
+            Vector3D xyVector = Vector3D.CrossProduct((new Vector3D(0, 0, 1)),  camera.Position - center);
 
-            var thetaRotation = new Quaternion(new Vector3D(0, 0, 1), theta);
-            var conjugateTheta = new Quaternion(new Vector3D(0, 0, 1), theta);
-            conjugateTheta.Conjugate();
+            var newPosition = camera.Position;
+            Geometry3D.RotatePoint(ref newPosition, center, xyVector, phi);
 
-            var rotatedPoint = conjugatePhi * originQuaternion * phiRotation;
-
-            if (rotatedPoint.X * camera.Position.X < 0)
+            if ((newPosition.X - center.X)*(camera.Position.X - center.X) < 0)
             {
-                rotatedPoint.X = camera.Position.X;
-                rotatedPoint.Y = camera.Position.Y;
+                newPosition.X = camera.Position.X;
+                newPosition.Y = camera.Position.Y;
             }
 
-            rotatedPoint = conjugateTheta * rotatedPoint * thetaRotation;
+            Geometry3D.RotatePoint(ref newPosition, center, new Vector3D(0, 0, 1), theta);
 
-            camera.Position = new Point3D(rotatedPoint.X, rotatedPoint.Y, rotatedPoint.Z);
-            camera.LookDirection = new Point3D() - camera.Position;
+            camera.LookDirection = center - newPosition;
+            camera.Position = newPosition;
             camera.UpDirection = new Vector3D(0, 0, 1);
         }
 
@@ -58,7 +50,7 @@ namespace Walrus2
 
             if (r > 1)
             {
-                camera.LookDirection = new Vector3D(-newPosition.X, -newPosition.Y, -newPosition.Z);
+                camera.LookDirection = (camera.Position + camera.LookDirection) - newPosition;
                 camera.Position = newPosition;
                 camera.UpDirection = new Vector3D(0, 0, 1);
             }

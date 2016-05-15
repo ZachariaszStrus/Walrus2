@@ -76,7 +76,7 @@ namespace Walrus2
             Graphs = new Dictionary<TabItem, Graph>();
         }
         
-        // drawing graph ---------------------------------------------------------------------
+        // drawing graph 
 
         private ModelVisual3D GetDrawedGraph(Graph graph)
         {
@@ -150,7 +150,7 @@ namespace Walrus2
             tabControl.SelectedItem = newTab;
         }
         
-        // moving camera ---------------------------------------------------------------------
+        // moving camera 
 
         private void Window_MouseMove(object sender, MouseEventArgs e)
         {
@@ -168,7 +168,7 @@ namespace Walrus2
                         PerspectiveCamera camera = SelectedViewport3D.Camera as PerspectiveCamera;
                         Vector delta = currentMousePosition - MouseInitialPosition;
                         if(delta.Length < 50)
-                            camera.RotateWithMouse(delta, new Point3D(0, 0, 0));
+                            camera.RotateWithMouse(delta);
                     }
                     MouseInitialPosition = currentMousePosition;
                 }
@@ -180,6 +180,12 @@ namespace Walrus2
             if (SelectedViewport3D != null)
             {
                 MouseInitialPosition = e.GetPosition(SelectedViewport3D);
+                if(e.ClickCount == 2)
+                {
+                    SelectNode();
+                    PerspectiveCamera camera = SelectedViewport3D.Camera as PerspectiveCamera;
+                    camera.LookDirection = SelectedNode.Position - camera.Position;
+                }
             }
         }
 
@@ -192,7 +198,8 @@ namespace Walrus2
             }
         }
         
-        // changing graph --------------------------------------------------------------------
+
+        // changing angle and radius 
 
         private void slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
@@ -201,6 +208,9 @@ namespace Walrus2
                 SelectedGraph.AdjustGraph(SelectedRadiusSlider.Value, SelectedAngleSlider.Value);
             }
         }
+
+
+        // open graph
 
         private void OpenFileMenuItem_Click(object sender, RoutedEventArgs e)
         {
@@ -215,7 +225,15 @@ namespace Walrus2
             }
         }
         
+
+        // selecting point
+
         private void GraphContextMenu_Opened(object sender, RoutedEventArgs e)
+        {
+            SelectNode();
+        }
+
+        private void SelectNode()
         {
             Point mouse_pos = MouseInitialPosition;
             HitTestResult result = VisualTreeHelper.HitTest(SelectedViewport3D, mouse_pos);
@@ -250,7 +268,7 @@ namespace Walrus2
                     foreach (var item in graphContextMenu.Items)
                     {
                         var menuItem = item as MenuItem;
-                        if(menuItem != null)
+                        if (menuItem != null)
                             menuItem.Visibility = Visibility.Collapsed;
                     }
                     (graphContextMenu.Items[0] as MenuItem).Visibility = Visibility.Visible;
@@ -268,6 +286,9 @@ namespace Walrus2
                 }
             }
         }
+
+
+        // expanding/collapsing
 
         private void CollapseDescendantsContextMenuItem_Click(object sender, RoutedEventArgs e)
         {
@@ -289,14 +310,18 @@ namespace Walrus2
         }
 
 
-        // changing root ----------------------------------------------------------------------
+        // changing root 
 
         private void ResetRootContextMenuItem_Click(object sender, RoutedEventArgs e)
         {
             if (SelectedTab != null)
             {
                 if (SelectedGraph.DefaultRoot != SelectedGraph.Root)
+                {
+                    SelectedRadiusSlider.Value = 1;
+                    SelectedAngleSlider.Value = 1;
                     SelectedGraph.ResetRoot();
+                }
             }
         }
 

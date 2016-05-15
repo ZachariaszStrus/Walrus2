@@ -15,7 +15,7 @@
             <MenuItem Header="" IsEnabled="False"/>
             <Separator/>
             <MenuItem x:Name="SetRootContextMenuItem" Header="Set as root" Click="SetRootContextMenuItem_Click"/>
-            <MenuItem x:Name="ResetRootContextMenuItem" Header="Reset as root" Click="ResetRootContextMenuItem_Click"/>
+            <MenuItem x:Name="ResetRootContextMenuItem" Header="Reset root" Click="ResetRootContextMenuItem_Click"/>
             <Separator/>
             <MenuItem x:Name="CollapseDescendantsContextMenuItem" Header="Collapse descendants" Click="CollapseDescendantsContextMenuItem_Click"/>
             <MenuItem x:Name="ExpandDescendantsContextMenuItem" Header="Expand descendants" Click="ExpandDescendantsContextMenuItem_Click"/>

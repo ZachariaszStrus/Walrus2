@@ -26,7 +26,6 @@ namespace Walrus2
             Nodes = new Dictionary<string, Node>();
 
             LoadFromFile(file);
-            Root.SetParents();
 
             Root.Position = new Point3D(0, 0, 0);
             Root.IsVisible = true;
@@ -34,6 +33,10 @@ namespace Walrus2
 
             SetRoot(Root);
             DefaultRoot = Root;
+            foreach (var node in Nodes.Values)
+            {
+                node.RefreshColor();
+            }
         }
 
         public void LoadFromFile(string file)
@@ -48,9 +51,11 @@ namespace Walrus2
                     {
                         currentLineArray = linesArray[i].Split(' ');
                     }
+
+                    var parentId = currentLineArray[0].Trim();
                     if (!Nodes.ContainsKey(currentLineArray[0].Trim()))
                     {
-                        Nodes.Add(currentLineArray[0].Trim(), new Node(currentLineArray[0].Trim()));
+                        Nodes.Add(parentId, new Node(parentId));
                     }
                     if (i == 0)
                     {
@@ -59,10 +64,12 @@ namespace Walrus2
                     for (var j = 1; j < currentLineArray.Length; j++)
                     {
                         if (currentLineArray[j] == "0") break;
+                        var childId = currentLineArray[j].Trim();
                         if (!Nodes.ContainsKey(currentLineArray[j].Trim()))
                         {
-                            Nodes.Add(currentLineArray[j].Trim(), new Node(currentLineArray[j].Trim()));
-                            Nodes[currentLineArray[0].Trim()].AddChild(Nodes[currentLineArray[j].Trim()]);
+                            Nodes.Add(currentLineArray[j].Trim(), new Node(childId));
+                            Nodes[parentId].AddChild(Nodes[childId]);
+                            Nodes[childId].Parent = Nodes[parentId];
                         }
                     }
                     
