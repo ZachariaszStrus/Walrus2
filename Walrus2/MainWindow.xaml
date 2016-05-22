@@ -24,16 +24,14 @@
     </Window.Resources>
     <Grid Background="Black" Margin="0,0,10,10" >
 
-        <dragablz:TabablzControl x:Name="tabControl" 
+        <TabControl x:Name="tabControl" 
                                  Background="#FF131313"
                                  Margin="10,41,0,0" Width="1047" 
                                  IsManipulationEnabled="False" 
-                                 ShowDefaultCloseButton="True" 
                                  RenderTransformOrigin="0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Height="561"/>
         <Menu x:Name="menu" HorizontalAlignment="Left" VerticalAlignment="Top" Width="1060" Background="Black" FontSize="14">
             <MenuItem Header="    File" Foreground="White" Width="65" Height="30" FontSize="14" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="#FF131313" BorderThickness="0" Margin="10,0,0,0">
                 <MenuItem x:Name="openFile" Header="Open" Click="OpenFileMenuItem_Click" Foreground="White" Background="Black" BorderThickness="0" Height="30" FontSize="14"/>
-                <MenuItem Header="Exit" Foreground="White" Background="Black" BorderThickness="0" Height="25" FontSize="14"/>
             </MenuItem>
         </Menu>
 

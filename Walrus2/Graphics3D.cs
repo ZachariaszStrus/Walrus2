@@ -68,11 +68,11 @@ namespace Walrus2
         {
             Vector3D delta = new Vector3D(p1.X - p0.X, p1.Y - p0.Y, p1.Z - p0.Z);
             double length = Math.Sqrt(Math.Pow(delta.X, 2) + Math.Pow(delta.Y, 2) + Math.Pow(delta.Z, 2));
-            int[] triangles = { 2, 3, 1, 2, 1, 0,
-                                7, 1, 3, 7, 5, 1,
-                                6, 5, 7, 6, 4, 5,
-                                6, 2, 0, 6, 0, 4,
-                                2, 7, 3, 2, 6, 7,
+            int[] triangles = { 1, 2, 3, 0, 1, 3,
+                                6, 1, 2, 6, 5, 1,
+                                7, 5, 6, 7, 4, 5,
+                                7, 3, 0, 7, 0, 4,
+                                3, 6, 2, 3, 7, 6,
                                 0, 1, 5, 0, 5, 4 };
 
             MeshGeometry3D mesh = new MeshGeometry3D();
@@ -98,7 +98,7 @@ namespace Walrus2
             for (int i = 0; i < 4; i++)
             {
                 Point3D point = p1 + prepVector;
-                Geometry3D.RotatePoint(ref point, p0, delta, theta);
+                Geometry3D.RotatePoint(ref point, p1, delta, theta);
                 points.Add(point);
                 theta += 90;
             }

@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Media.Media3D;
 
 namespace Walrus2
 {
-    public class Graph
+    public class Graph 
     {
         public string Name { get; set; }
 
@@ -19,6 +20,12 @@ namespace Walrus2
         public Model3DGroup GeometryModelGroup { get; set; }
 
 
+
+        public static Task<Graph> LoadGraphAsync(string file)
+        {
+            return Task.Run<Graph>(() => new Graph(file));
+        }
+        
         public Graph(string file)
         {
             GeometryModelGroup = new Model3DGroup();
@@ -76,6 +83,7 @@ namespace Walrus2
                 }
             }
         }
+
 
         // main algorithm --------------------------------------------------------------------
 
@@ -175,6 +183,7 @@ namespace Walrus2
             }
         }
 
+        
         // changing graph --------------------------------------------------------------------
 
         public void AdjustGraph(double radiusFactor = 1, double angleFactor = 1)

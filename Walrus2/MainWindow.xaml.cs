@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
+using System.Windows.Threading;
 
 namespace Walrus2
 {
@@ -33,7 +35,7 @@ namespace Walrus2
         {
             get
             {
-                return SelectedTab.Content as Grid;
+                return SelectedTab != null ? SelectedTab.Content as Grid : null;
             }
         }
 
@@ -41,7 +43,7 @@ namespace Walrus2
         {
             get
             {
-                return SelectedGrid.Children[0] as Viewport3D;
+                return SelectedGrid != null ? SelectedGrid.Children[0] as Viewport3D : null;
             }
         }
 
@@ -68,6 +70,7 @@ namespace Walrus2
                 return SelectedTab != null ? Graphs[SelectedTab] : null;
             }
         }
+
 
 
         public MainWindow()
@@ -144,12 +147,14 @@ namespace Walrus2
             newTab.Header = graph.Name;
             newTab.Content = content;
             
-            Graphs.Add(newTab, graph);
-
             tabControl.Items.Add(newTab);
             tabControl.SelectedItem = newTab;
+
+            Graphs.Add(newTab, graph);
+            SelectedNode = graph.Root;
         }
         
+
         // moving camera 
 
         private void Window_MouseMove(object sender, MouseEventArgs e)
@@ -206,6 +211,8 @@ namespace Walrus2
             if (SelectedTab != null)
             {
                 SelectedGraph.AdjustGraph(SelectedRadiusSlider.Value, SelectedAngleSlider.Value);
+                PerspectiveCamera camera = SelectedViewport3D.Camera as PerspectiveCamera;
+                camera.LookDirection = SelectedNode.Position - camera.Position;
             }
         }
 
@@ -221,16 +228,42 @@ namespace Walrus2
             string selectedFile = fileDialog.FileName;
             if (File.Exists(selectedFile))
             {
-                DrawGraph(new Graph(selectedFile));
+                Graph graph = new Graph(selectedFile);
+                DrawGraph(graph);
             }
         }
         
+
 
         // selecting point
 
         private void GraphContextMenu_Opened(object sender, RoutedEventArgs e)
         {
             SelectNode();
+            var graphContextMenu = TryFindResource("GraphContextMenu") as ContextMenu;
+            if (SelectedNode.Children.Count == 0)
+            {
+                (graphContextMenu.Items[0] as MenuItem).Header = "ID : " + SelectedNode.ID;
+                foreach (var item in graphContextMenu.Items)
+                {
+                    var menuItem = item as MenuItem;
+                    if (menuItem != null)
+                        menuItem.Visibility = Visibility.Collapsed;
+                }
+                (graphContextMenu.Items[4] as MenuItem).Visibility = Visibility.Visible;
+                (graphContextMenu.Items[0] as MenuItem).Visibility = Visibility.Visible;
+            }
+            else
+            {
+                (graphContextMenu.Items[0] as MenuItem).Header = "ID : " + SelectedNode.ID;
+                (graphContextMenu.Items[1] as MenuItem).Header = "Children : " + SelectedNode.Children.Count;
+                foreach (var item in graphContextMenu.Items)
+                {
+                    var menuItem = item as MenuItem;
+                    if (menuItem != null)
+                        menuItem.Visibility = Visibility.Visible;
+                }
+            }
         }
 
         private void SelectNode()
@@ -261,29 +294,7 @@ namespace Walrus2
                 }
 
                 SelectedNode = closestNode;
-                var graphContextMenu = TryFindResource("GraphContextMenu") as ContextMenu;
-                if (SelectedNode.Children.Count == 0)
-                {
-                    (graphContextMenu.Items[0] as MenuItem).Header = "ID : " + SelectedNode.ID;
-                    foreach (var item in graphContextMenu.Items)
-                    {
-                        var menuItem = item as MenuItem;
-                        if (menuItem != null)
-                            menuItem.Visibility = Visibility.Collapsed;
-                    }
-                    (graphContextMenu.Items[0] as MenuItem).Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    (graphContextMenu.Items[0] as MenuItem).Header = "ID : " + SelectedNode.ID;
-                    (graphContextMenu.Items[1] as MenuItem).Header = "Children : " + SelectedNode.Children.Count;
-                    foreach (var item in graphContextMenu.Items)
-                    {
-                        var menuItem = item as MenuItem;
-                        if (menuItem != null)
-                            menuItem.Visibility = Visibility.Visible;
-                    }
-                }
+                
             }
         }
 
@@ -321,6 +332,9 @@ namespace Walrus2
                     SelectedRadiusSlider.Value = 1;
                     SelectedAngleSlider.Value = 1;
                     SelectedGraph.ResetRoot();
+                    SelectedNode = SelectedGraph.Root;
+                    PerspectiveCamera camera = SelectedViewport3D.Camera as PerspectiveCamera;
+                    camera.LookDirection = new Point3D() - camera.Position;
                 }
             }
         }
@@ -335,6 +349,8 @@ namespace Walrus2
                     SelectedRadiusSlider.Value = 1;
                     SelectedAngleSlider.Value = 1;
                     SelectedGraph.SetRoot(SelectedNode);
+                    PerspectiveCamera camera = SelectedViewport3D.Camera as PerspectiveCamera;
+                    camera.LookDirection = new Point3D() - camera.Position;
                 }
             }
         }

@@ -100,15 +100,14 @@ namespace Walrus2
             double p = (double)Children.Count / _maxChildrenCount;
             double r = 0;
             double g = 0;
-            if (p > 0.5)
+            if (Children.Count == 0)
             {
-                r = 255;
-                g = 2 * (1.0 - p) * 255;
+                g = 255;
             }
             else
             {
-                g = 255;
-                r = 2 * p * 255;
+                r = 255;
+                g = (1-p) * 255;
             }
             ModelColor = Color.FromRgb(Convert.ToByte(r), Convert.ToByte(g), 0);
             GeometryModel.Material = new DiffuseMaterial(new SolidColorBrush(ModelColor));
